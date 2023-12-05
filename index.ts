@@ -4,7 +4,6 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -21,7 +20,6 @@ const params = {
 };
 
 init();
-
 function init() {
   const container = document.getElementById('container');
 
@@ -30,22 +28,22 @@ function init() {
 
   clock = new THREE.Clock();
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
+  const renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.toneMapping = THREE.ReinhardToneMapping;
   container.appendChild(renderer.domElement);
 
-  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 500);
+  camera.position.set(0, 0, 100);
+  camera.lookAt(0, 0, 0);
 
-  camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 100);
-  camera.position.set(-5, 2.5, -3.5);
+  const scene = new THREE.Scene();
+  window.scene = scene;
   scene.add(camera);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.maxPolarAngle = Math.PI * 0.5;
-  controls.minDistance = 3;
-  controls.maxDistance = 8;
+  controls.minDistance = 30;
+  controls.maxDistance = 800;
 
   scene.add(new THREE.AmbientLight(0xcccccc));
 
@@ -53,6 +51,7 @@ function init() {
   camera.add(pointLight);
 
   const renderScene = new RenderPass(scene, camera);
+  addCubes(scene);
 
   const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
   bloomPass.threshold = params.threshold;
@@ -65,19 +64,6 @@ function init() {
   composer.addPass(renderScene);
   composer.addPass(bloomPass);
   composer.addPass(outputPass);
-
-  new GLTFLoader().load('./PrimaryIonDrive.glb', function (gltf) {
-    const model = gltf.scene;
-
-    scene.add(model);
-
-    mixer = new THREE.AnimationMixer(model);
-    const clip = gltf.animations[0];
-    mixer.clipAction(clip.optimize()).play();
-
-    animate();
-  });
-  
 
   const gui = new GUI();
 
@@ -103,8 +89,27 @@ function init() {
   toneMappingFolder.add(params, 'exposure', 0.1, 2).onChange(function (value) {
     renderer.toneMappingExposure = Math.pow(value, 4.0);
   });
-
+  animate();
   window.addEventListener('resize', onWindowResize);
+}
+
+function addCubes(scene) {
+  // let texture = new THREE.TextureLoader().load('./sky.png');
+  // var geometry = new THREE.BoxGeometry(4, 4, 4);
+  var material = new THREE.MeshBasicMaterial({
+    // map: texture,
+    color: 'red',
+  });
+
+  const points = [];
+  points.push(new THREE.Vector3(-100, 0, 0));
+  points.push(new THREE.Vector3(0, 100, 0));
+  points.push(new THREE.Vector3(300, 0, 0));
+
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const line = new THREE.Line(geometry, material);
+  scene.add(line);
+  mixer = new THREE.AnimationMixer(line);
 }
 
 function onWindowResize() {
@@ -120,12 +125,6 @@ function onWindowResize() {
 
 function animate() {
   requestAnimationFrame(animate);
-
-  const delta = clock.getDelta();
-
-  mixer.update(delta);
-
   stats.update();
-
   composer.render();
 }
