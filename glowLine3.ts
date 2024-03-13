@@ -67,7 +67,6 @@ function createLine2(obj) {
   ];
   // Geometry
   var straightProject = utils.lnglatsToWorld(obj.geometry);
-  console.error('straightProject', straightProject);
   var normalized = utils.normalizeVertices(straightProject);
   var flattenedArray = utils.flattenVectors(normalized.vertices);
   var geometry = new LineGeometry();
