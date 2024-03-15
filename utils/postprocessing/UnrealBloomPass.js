@@ -334,16 +334,21 @@ class UnrealBloomPass extends Pass {
 				void main() {
 					float weightSum = gaussianCoefficients[0];
 					vec3 diffuseSum = texture2D( colorTexture, vUv ).rgb * weightSum;
+					float alphaSum = 0.0;
 					for( int i = 1; i < KERNEL_RADIUS; i ++ ) {
 						float x = float(i);
 						float w = gaussianCoefficients[i];
 						vec2 uvOffset = direction * invSize * x;
-						vec3 sample1 = texture2D( colorTexture, vUv + uvOffset ).rgb;
-						vec3 sample2 = texture2D( colorTexture, vUv - uvOffset ).rgb;
-						diffuseSum += (sample1 + sample2) * w;
+						vec4 sample1 = texture2D( colorTexture, vUv + uvOffset );
+						vec4 sample2 = texture2D( colorTexture, vUv - uvOffset );
+						diffuseSum += (sample1.rgb + sample2.rgb) * w;
+						alphaSum += (sample1.a + sample2.a);  // Sum of alpha values
 						weightSum += 2.0 * w;
 					}
-					gl_FragColor = vec4(diffuseSum/weightSum, 1.0);
+				
+					alphaSum /= weightSum; // Normalize alpha sum
+					alphaSum = min(alphaSum, 0.15); //Limit the value of alphaSum
+					gl_FragColor = vec4(diffuseSum / weightSum, alphaSum);
 				}`
 		} );
 

@@ -9,16 +9,9 @@ import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 
-import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-// import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { EffectComposer } from './utils/postprocessing/EffectComposer.js';
-// import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { RenderPass } from './utils/postprocessing/RenderPass.js';
-// import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { UnrealBloomPass } from './utils/postprocessing/UnrealBloomPass.js';
-// import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { OutputPass } from './utils/postprocessing/OutputPass.js';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoienRvcCIsImEiOiJjanZhamkzOWwxY3VsNGFtZWxiMXhiODlpIn0.2c34LZm8wtcAkfJBMOGYMw';
@@ -45,28 +38,27 @@ map.on('style.load', function () {
     type: 'custom',
     onAdd: function (map, gl) {
       const container = map.getCanvas();
-      const bloomContainer = document.createElement('canvas');
+      // const bloomContainer = document.createElement('canvas');
+      const bloomContainer = document.getElementById('three');
       bloomContainer.width = container.width;
       bloomContainer.height = container.height;
-      // clock = new THREE.Clock();
-      // stats = new Stats();
-      // container.appendChild(stats.dom);
       renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true,
-        canvas: container,
-        context: gl,
+        canvas: bloomContainer,
       });
 
+      renderer.setPixelRatio(window.devicePixelRatio);
       renderer.shadowMap.enabled = true;
       renderer.autoClear = false;
 
-      renderer.setClearColor(0xffffff);
+      // renderer.setClearColor(0xffffff);
 
       camera = new THREE.PerspectiveCamera(28, window.innerWidth / window.innerHeight, 0.000000000001, Infinity);
 
       // 创建场景
       scene = new THREE.Scene();
+      // scene.background = new THREE.Color(0x00000000);
       scene.add(group);
       scene.add(new THREE.AmbientLight(0xcccccc));
 
@@ -94,57 +86,17 @@ map.on('style.load', function () {
       composer.addPass(renderScene);
       composer.addPass(bloomPass);
       composer.addPass(outputPass);
-      // controls = new OrbitControls(camera, renderer.domElement);
-      // const gui = new GUI();
-
-      // const bloomFolder = gui.addFolder('bloom');
-
-      // bloomFolder.add(params, 'threshold', 0.0, 1.0).onChange(function (value) {
-      //   bloomPass.threshold = Number(value);
-      // });
-
-      // bloomFolder.add(params, 'strength', 0.0, 3.0).onChange(function (value) {
-      //   bloomPass.strength = Number(value);
-      // });
-
-      // gui
-      //   .add(params, 'radius', 0.0, 1.0)
-      //   .step(0.01)
-      //   .onChange(function (value) {
-      //     bloomPass.radius = Number(value);
-      //   });
-
-      // const toneMappingFolder = gui.addFolder('tone mapping');
-
-      // toneMappingFolder.add(params, 'exposure', 0.1, 2).onChange(function (value) {
-      //   renderer.toneMappingExposure = Math.pow(value, 4.0);
-      // });
     },
     render: function (gl, matrix) {
       composer.render();
       renderer.resetState();
       renderer.render(scene, camera);
       // composer.render();
-     
-      // stats.update();
-      // controls.update();
-      
-      // map.triggerRepaint();
-
-      // 手动清除颜色缓冲区和深度缓冲区
-      // gl.clear(gl.COLOR_BUFFER_BIT);
-
-      // 渲染正常场景
-      // renderer.render(scene, camera);
-
-      // 将 render target 设置为 active target，保留深度缓冲区
-      // composer.render();
     },
   });
 });
 
 function createLine2(obj) {
-  // obj = utils._validate(obj, Objects.prototype._defaults.line);
   obj.geometry = [
     [120.35539813547194, 31.167008537160598, 0],
     [120.6784178452819, 31.25767648523754, 0],

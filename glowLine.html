@@ -17,39 +17,20 @@
       width: 100%;
       height: 100%;
     }
+
+    #three {
+      position: absolute;
+      z-index: 999;
+      /* opacity: 0.5; */
+      pointer-events: none;
+    }
   </style>
 </head>
 
 <body>
-  <div id="container" class="map"></div>
-  <!-- <script type="module" src="./glowLine.ts"></script> -->
-  <script type="x-shader/x-vertex" id="vertexshader">
 
-    varying vec2 vUv;
-
-    void main() {
-
-      vUv = uv;
-
-      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-
-    }
-
-  </script>
-
-  <script type="x-shader/x-fragment" id="fragmentshader">
-
-    uniform sampler2D baseTexture;
-    uniform sampler2D bloomTexture;
-
-    varying vec2 vUv;
-
-    void main() {
-
-      gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
-
-    }
-
-  </script>
+  <div id="container" class="map">
+    <canvas id="three"></canvas>
+  </div>
   <script type="module" src="./glowLine6.ts"></script>
 </body>
