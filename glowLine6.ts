@@ -23,7 +23,6 @@ var map = new mapboxgl.Map({
   center: [120.35539813547194, 31.167008537160598],
 });
 
-let camera, scene, renderer, stats, composer, clock, finalComposer, controls;
 const params = {
   threshold: 0,
   strength: 1,
@@ -32,6 +31,7 @@ const params = {
 };
 
 map.on('style.load', function () {
+  let camera, scene, renderer, stats, composer, clock, finalComposer, controls, line;
   let group = new THREE.Group();
   map.addLayer({
     id: 'custom_layer',
@@ -64,12 +64,23 @@ map.on('style.load', function () {
 
       new CameraSync(map, camera, group);
       // const line = createLine();
-      const line = createLine2({
+      line = createLine2({
         color: 0x00ff00,
         width: 4,
         opacity: 1,
+        containerWidth: container.width,
+        containerHeight: container.height,
       });
       group.add(line);
+
+      function onWindowResize() {
+        const width = container.width;
+        const height = container.height;
+        renderer.setSize(width, height);
+        composer.setSize(width, height);
+        // material的宽度是世界坐标的size.Line2随着窗口变化宽度会变化，因此需要同步resolution
+        line.material.resolution.set(width, height);
+      }
 
       const renderScene = new RenderPass(scene, camera);
 
@@ -86,12 +97,13 @@ map.on('style.load', function () {
       composer.addPass(renderScene);
       composer.addPass(bloomPass);
       composer.addPass(outputPass);
+      window.addEventListener('resize', onWindowResize);
+      onWindowResize();
     },
     render: function (gl, matrix) {
       composer.render();
       renderer.resetState();
       renderer.render(scene, camera);
-      // composer.render();
     },
   });
 });
@@ -116,7 +128,7 @@ function createLine2(obj) {
     opacity: obj.opacity,
   });
 
-  matLine.resolution.set(window.innerWidth, window.innerHeight);
+  matLine.resolution.set(obj.containerWidth, obj.containerHeight);
   matLine.isMaterial = true;
   matLine.transparent = true;
   matLine.depthWrite = false;
