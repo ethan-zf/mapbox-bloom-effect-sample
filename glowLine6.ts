@@ -53,9 +53,7 @@ map.on('style.load', function () {
       renderer.autoClear = false;
 
       // renderer.setClearColor(0xffffff);
-
-      camera = new THREE.PerspectiveCamera(28, window.innerWidth / window.innerHeight, 0.000000000001, Infinity);
-
+      camera = new THREE.PerspectiveCamera(28, container.innerWidth / container.innerHeight, 0.000000000001, Infinity);
       // 创建场景
       scene = new THREE.Scene();
       // scene.background = new THREE.Color(0x00000000);
