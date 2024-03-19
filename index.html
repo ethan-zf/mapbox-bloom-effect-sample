@@ -1,33 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>three.js webgl - postprocessing - unreal bloom</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <link type="text/css" rel="stylesheet" href="main.css" />
-    <style>
-      #info > * {
-        max-width: 650px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="container"></div>
 
-    <div id="info">
-      <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - Bloom pass by
-      <a href="http://eduperiment.com" target="_blank" rel="noopener">Prashant Sharma</a> and
-      <a href="https://clara.io" target="_blank" rel="noopener">Ben Houston</a>
-      <br />
-      Model:
-      <a href="https://blog.sketchfab.com/art-spotlight-primary-ion-drive/" target="_blank" rel="noopener"
-        >Primary Ion Drive</a
-      >
-      by <a href="http://mjmurdock.com/" target="_blank" rel="noopener">Mike Murdock</a>, CC Attribution.
-    </div>
+<head>
+  <title>Line Example</title>
+  <!-- <script src="https://api.mapbox.com/mapbox-gl-js/v1.13.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v1.13.0/mapbox-gl.css" rel="stylesheet" /> -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <!-- <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" /> -->
+  <style>
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: black;
+    }
 
-    <script type="module" src="./index.ts"></script>
-  </body>
-</html>
+    #container {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container" class="map"></div>
+  <script type="module" src="./index.ts"></script>
+</body>

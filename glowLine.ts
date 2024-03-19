@@ -32,7 +32,7 @@ var map = new mapboxgl.Map({
 });
 
 map.on('style.load', function () {
-  let camera, scene, renderer, stats, bloomComposer, clock, finalComposer, controls, threeRender;
+  let camera, scene, renderer, bloomComposer, finalComposer, threeRender;
   const params = {
     threshold: 0,
     strength: 1,
@@ -48,9 +48,6 @@ map.on('style.load', function () {
       const bloomContainer = document.createElement('canvas');
       bloomContainer.width = container.width;
       bloomContainer.height = container.height;
-      // clock = new THREE.Clock();
-      // stats = new Stats();
-      // container.appendChild(stats.dom);
       renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true,
