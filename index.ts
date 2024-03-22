@@ -64,7 +64,7 @@ map.on('style.load', function () {
       renderer.autoClear = false;
 
       // renderer.setClearColor(0xffffff);
-      camera = new THREE.PerspectiveCamera(28, container.innerWidth / container.innerHeight, 0.000000000001, Infinity);
+      camera = new THREE.PerspectiveCamera(28, container.width / container.height, 0.000000000001, Infinity);
       // 创建场景
       scene = new THREE.Scene();
       // scene.background = new THREE.Color(0x00000000);
@@ -82,8 +82,8 @@ map.on('style.load', function () {
       group.add(line);
 
       function onWindowResize() {
-        const width = container.width;
-        const height = container.height;
+        const width = container.width / window.devicePixelRatio;
+        const height = container.height / window.devicePixelRatio;
         renderer.setSize(width, height);
         composer.setSize(width, height);
         // material的宽度是世界坐标的size.Line2随着窗口变化宽度会变化，因此需要同步resolution
@@ -269,6 +269,6 @@ function createLine2(obj) {
   // Mesh
   let line = new Line2(geometry, matLine);
   line.position.copy(normalized.position);
-  line.computeLineDistances();
+  // line.computeLineDistances();
   return line;
 }
