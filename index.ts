@@ -71,7 +71,10 @@ map.on('style.load', function () {
       scene.add(group);
       scene.add(new THREE.AmbientLight(0xcccccc));
 
+      // 相机同步
       new CameraSync(map, camera, group);
+
+      //添加线
       line = createLine2({
         color: 0x00bfff,
         width: 4,
@@ -80,6 +83,10 @@ map.on('style.load', function () {
         containerHeight: container.height,
       });
       group.add(line);
+
+      //添加mesh
+      const mesh = createMesh();
+      group.add(mesh);
 
       function onWindowResize() {
         const width = container.width / window.devicePixelRatio;
@@ -271,4 +278,28 @@ function createLine2(obj) {
   line.position.copy(normalized.position);
   // line.computeLineDistances();
   return line;
+}
+
+function createMesh() {
+  const points = [
+    [121.47540519609203, 31.068403408422398],
+    [121.40293459353683, 30.980240693209183],
+    [121.57515884902091, 30.979997036822525],
+  ];
+
+  var straightProject = utils.lnglatsToWorld(points);
+  console.error('straightProject', straightProject);
+  var normalized = utils.normalizeVertices(straightProject);
+
+  console.error('normalized', normalized);
+  var flattenedArray = utils.flattenVectors(normalized.vertices);
+  console.error('flattenedArray', flattenedArray);
+  // 创建 Float32Array 来存储顶点数据
+  const verticesArray = new Float32Array(flattenedArray);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(verticesArray, 3));
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(normalized.position.x, normalized.position.y, normalized.position.z);
+  return mesh;
 }
