@@ -12,6 +12,7 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { EffectComposer } from 'three/examples/jsm//postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm//postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './utils/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm//postprocessing/OutputPass.js';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoienRvcCIsImEiOiJjanZhamkzOWwxY3VsNGFtZWxiMXhiODlpIn0.2c34LZm8wtcAkfJBMOGYMw';
@@ -31,8 +32,14 @@ const params = {
 };
 
 map.on('style.load', function () {
-  let camera, scene, renderer, composer, line;
+  let camera, scene, renderer, composer, line, bloomComposer, mesh, container;
   let group = new THREE.Group();
+  const BLOOM_SCENE = 1;
+  const bloomLayer = new THREE.Layers();
+  bloomLayer.set(BLOOM_SCENE);
+
+  const darkMaterial = new THREE.MeshBasicMaterial({ color: 'black' });
+  const materials = {};
   map.addLayer({
     id: 'custom_layer',
     type: 'custom',
@@ -88,6 +95,9 @@ map.on('style.load', function () {
       const mesh = createMesh();
       group.add(mesh);
 
+      mesh.layers.enable(BLOOM_SCENE);
+      line.layers.enable(BLOOM_SCENE);
+
       function onWindowResize() {
         const width = container.width / window.devicePixelRatio;
         const height = container.height / window.devicePixelRatio;
@@ -105,21 +115,57 @@ map.on('style.load', function () {
         params.radius,
         params.threshold,
       );
+      bloomComposer = new EffectComposer(renderer);
+      bloomComposer.renderToScreen = false;
+      bloomComposer.addPass(renderScene);
+      bloomComposer.addPass(bloomPass);
+      const mixPass = new ShaderPass(
+        new THREE.ShaderMaterial({
+          uniforms: {
+            baseTexture: { value: null },
+            bloomTexture: { value: bloomComposer.renderTarget2.texture },
+          },
+          vertexShader: document.getElementById('vertexshader').textContent,
+          fragmentShader: document.getElementById('fragmentshader').textContent,
+          defines: {},
+        }),
+        'baseTexture',
+      );
+      mixPass.needsSwap = true;
+
       const outputPass = new OutputPass();
 
       composer = new EffectComposer(renderer);
       composer.addPass(renderScene);
-      composer.addPass(bloomPass);
+      composer.addPass(mixPass);
       composer.addPass(outputPass);
+
       window.addEventListener('resize', onWindowResize);
       onWindowResize();
     },
     render: function (gl, matrix) {
+      scene.traverse(darkenNonBloomed);
+      bloomComposer.render();
+      scene.traverse(restoreMaterial);
       composer.render();
       renderer.resetState();
       renderer.render(scene, camera);
     },
   });
+
+  function darkenNonBloomed(obj) {
+    if (obj.isMesh && bloomLayer.test(obj.layers) === false) {
+      materials[obj.uuid] = obj.material;
+      obj.material = darkMaterial;
+    }
+  }
+
+  function restoreMaterial(obj) {
+    if (materials[obj.uuid]) {
+      obj.material = materials[obj.uuid];
+      delete materials[obj.uuid];
+    }
+  }
 });
 
 function createLine2(obj) {

@@ -87,6 +87,7 @@ class UnrealBloomPass extends Pass {
 
 		this.separableBlurMaterials = [];
 		const kernelSizeArray = [ 3, 5, 7, 9, 11 ];
+		// const kernelSizeArray = [ 3, 4, 5, 6, 7 ];
 		resx = Math.round( this.resolution.x / 2 );
 		resy = Math.round( this.resolution.y / 2 );
 
