@@ -1,5 +1,3 @@
-// 未结合地图的带宽度线
-
 import * as THREE from 'three';
 
 import CameraSync from './utils/CameraSync.js';
@@ -14,14 +12,15 @@ import { RenderPass } from 'three/examples/jsm//postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './utils/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm//postprocessing/OutputPass.js';
+import accessToken from './accessToken.js';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoienRvcCIsImEiOiJjanZhamkzOWwxY3VsNGFtZWxiMXhiODlpIn0.2c34LZm8wtcAkfJBMOGYMw';
+mapboxgl.accessToken = accessToken;
 var map = new mapboxgl.Map({
   container: 'container',
   style: 'mapbox://styles/mapbox/dark-v9',
-  zoom: 11,
+  zoom: 10,
   pitch: 0,
-  center: [121.45485566448343, 31.224625149100802],
+  center: [121.45485566448343, 31.16],
 });
 
 const params = {
@@ -44,7 +43,9 @@ map.on('style.load', function () {
     id: 'custom_layer',
     type: 'custom',
     onAdd: function (map, gl) {
-      const container = map.getCanvas();
+      container = map.getCanvas();
+      const w = container.clientWidth;
+      const h = container.clientHeight;
       const mapContainer = map.getContainer();
       let bloomContainer = mapContainer.querySelector('#_THREE_EFFECTS_CONTAINER_');
       if (!bloomContainer) {
@@ -55,8 +56,8 @@ map.on('style.load', function () {
         bloomContainer.style.pointerEvents = 'none';
         bloomContainer.style.width = '100%';
         bloomContainer.style.height = '100%';
-        bloomContainer.width = container.width;
-        bloomContainer.height = container.height;
+        bloomContainer.width = w;
+        bloomContainer.height = h;
         mapContainer.appendChild(bloomContainer);
       }
 
@@ -71,50 +72,53 @@ map.on('style.load', function () {
       renderer.autoClear = false;
 
       // renderer.setClearColor(0xffffff);
-      camera = new THREE.PerspectiveCamera(28, container.width / container.height, 0.000000000001, Infinity);
-      // 创建场景
+      // Do not set the near parameter of PerspectiveCamera to 0, and also do not set far to infinity.
+      // Otherwise, it will lead to NaN values in camera.projectionMatrix and camera.projectionMatrixInverse,
+      // causing the direction property of the ray in the raycaster to become NaN and resulting in failure to hit objects with intersectObjects
+      camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 1e21);
       scene = new THREE.Scene();
       // scene.background = new THREE.Color(0x00000000);
       scene.add(group);
       scene.add(new THREE.AmbientLight(0xcccccc));
 
-      // 相机同步
+      // camera sync
       new CameraSync(map, camera, group);
 
-      //添加线
+      //add line
       line = createLine2({
         color: 0x00bfff,
         width: 4,
         opacity: 1,
-        containerWidth: container.width,
-        containerHeight: container.height,
+        containerWidth: w,
+        containerHeight: h,
       });
       group.add(line);
 
-      //添加mesh
+      //add mesh
       const mesh = createMesh();
       group.add(mesh);
 
+      //add cube
+      const cube = createCube();
+      group.add(cube);
+
+      // You can control whether graphics enable bloom effect through layers.
       mesh.layers.enable(BLOOM_SCENE);
       line.layers.enable(BLOOM_SCENE);
+      cube.layers.enable(BLOOM_SCENE);
 
       function onWindowResize() {
         const width = container.width / window.devicePixelRatio;
         const height = container.height / window.devicePixelRatio;
         renderer.setSize(width, height);
+        bloomComposer.setSize(width, height);
         composer.setSize(width, height);
-        // material的宽度是世界坐标的size.Line2随着窗口变化宽度会变化，因此需要同步resolution
         line.material.resolution.set(width, height);
       }
 
       const renderScene = new RenderPass(scene, camera);
 
-      const bloomPass = new UnrealBloomPass(
-        new THREE.Vector2(container.width, container.height),
-        params.strength,
-        params.radius,
-        params.threshold,
-      );
+      const bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), params.strength, params.radius, params.threshold);
       bloomComposer = new EffectComposer(renderer);
       bloomComposer.renderToScreen = false;
       bloomComposer.addPass(renderScene);
@@ -125,7 +129,9 @@ map.on('style.load', function () {
             baseTexture: { value: null },
             bloomTexture: { value: bloomComposer.renderTarget2.texture },
           },
+          // @ts-ignore
           vertexShader: document.getElementById('vertexshader').textContent,
+          // @ts-ignore
           fragmentShader: document.getElementById('fragmentshader').textContent,
           defines: {},
         }),
@@ -144,9 +150,9 @@ map.on('style.load', function () {
       onWindowResize();
     },
     render: function (gl, matrix) {
-      scene.traverse(darkenNonBloomed);
-      bloomComposer.render();
-      scene.traverse(restoreMaterial);
+      // scene.traverse(darkenNonBloomed);
+      // bloomComposer.render();
+      // scene.traverse(restoreMaterial);
       composer.render();
       renderer.resetState();
       renderer.render(scene, camera);
@@ -166,6 +172,23 @@ map.on('style.load', function () {
       delete materials[obj.uuid];
     }
   }
+
+  var raycaster = new THREE.Raycaster();
+  var mouse = new THREE.Vector2();
+
+  function onMouseClick(event) {
+    mouse.x = (event.clientX / (container.width / window.devicePixelRatio)) * 2 - 1;
+    mouse.y = -(event.clientY / (container.height / window.devicePixelRatio)) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    var intersects = raycaster.intersectObjects(scene.children, true);
+    if (intersects.length > 0) {
+      console.log('Object clicked!');
+      intersects[0].object.material.color.set(0xff0000);
+    }
+  }
+
+  window.addEventListener('click', onMouseClick, false);
 });
 
 function createLine2(obj) {
@@ -334,12 +357,8 @@ function createMesh() {
   ];
 
   var straightProject = utils.lnglatsToWorld(points);
-  console.error('straightProject', straightProject);
   var normalized = utils.normalizeVertices(straightProject);
-
-  console.error('normalized', normalized);
   var flattenedArray = utils.flattenVectors(normalized.vertices);
-  console.error('flattenedArray', flattenedArray);
   // 创建 Float32Array 来存储顶点数据
   const verticesArray = new Float32Array(flattenedArray);
   const geometry = new THREE.BufferGeometry();
@@ -348,4 +367,15 @@ function createMesh() {
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(normalized.position.x, normalized.position.y, normalized.position.z);
   return mesh;
+}
+
+function createCube() {
+  const center = [120.41757805552356, 31.29850166233554];
+  var straightProject = utils.projectToWorld(center);
+  var geometry = new THREE.BoxGeometry(200, 200, 200);
+  var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  var cube = new THREE.Mesh(geometry, material);
+
+  cube.position.set(straightProject.x, straightProject.y, straightProject.z);
+  return cube;
 }
