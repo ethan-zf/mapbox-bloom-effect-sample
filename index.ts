@@ -7,11 +7,11 @@ import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 
-import { EffectComposer } from 'three/examples/jsm//postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm//postprocessing/RenderPass.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './utils/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
-import { OutputPass } from 'three/examples/jsm//postprocessing/OutputPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import accessToken from './accessToken.js';
 
 mapboxgl.accessToken = accessToken;
@@ -75,7 +75,7 @@ map.on('style.load', function () {
       // Do not set the near parameter of PerspectiveCamera to 0, and also do not set far to infinity.
       // Otherwise, it will lead to NaN values in camera.projectionMatrix and camera.projectionMatrixInverse,
       // causing the direction property of the ray in the raycaster to become NaN and resulting in failure to hit objects with intersectObjects
-      camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 1e21);
+      camera = new THREE.PerspectiveCamera(map.transform.fov, w / h, 0.1, 1e21);
       scene = new THREE.Scene();
       // scene.background = new THREE.Color(0x00000000);
       scene.add(group);
@@ -150,9 +150,9 @@ map.on('style.load', function () {
       onWindowResize();
     },
     render: function (gl, matrix) {
-      // scene.traverse(darkenNonBloomed);
-      // bloomComposer.render();
-      // scene.traverse(restoreMaterial);
+      scene.traverse(darkenNonBloomed);
+      bloomComposer.render();
+      scene.traverse(restoreMaterial);
       composer.render();
       renderer.resetState();
       renderer.render(scene, camera);
@@ -177,9 +177,11 @@ map.on('style.load', function () {
   var mouse = new THREE.Vector2();
 
   function onMouseClick(event) {
-    mouse.x = (event.clientX / (container.width / window.devicePixelRatio)) * 2 - 1;
-    mouse.y = -(event.clientY / (container.height / window.devicePixelRatio)) * 2 + 1;
+    const w = container.width / window.devicePixelRatio;
+    const h = container.height / window.devicePixelRatio;
 
+    mouse.x = (event.clientX / w) * 2 - 1;
+    mouse.y = -(event.clientY / h) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
     var intersects = raycaster.intersectObjects(scene.children, true);
     if (intersects.length > 0) {
@@ -370,10 +372,10 @@ function createMesh() {
 }
 
 function createCube() {
-  const center = [120.41757805552356, 31.29850166233554];
+  const center = [121.10987446056618, 31.18596578115384];
   var straightProject = utils.projectToWorld(center);
   var geometry = new THREE.BoxGeometry(200, 200, 200);
-  var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  var material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
   var cube = new THREE.Mesh(geometry, material);
 
   cube.position.set(straightProject.x, straightProject.y, straightProject.z);
