@@ -25,9 +25,9 @@ var map = new mapboxgl.Map({
 
 const params = {
   threshold: 0,
-  strength: 1,
+  strength: 0.3,
   radius: 0,
-  exposure: 1,
+  exposure: 0.1,
 };
 
 map.on('style.load', function () {
@@ -80,6 +80,7 @@ map.on('style.load', function () {
       // scene.background = new THREE.Color(0x00000000);
       scene.add(group);
       scene.add(new THREE.AmbientLight(0xcccccc));
+      renderer.setClearAlpha(0.0);
 
       // camera sync
       new CameraSync(map, camera, group);
@@ -361,7 +362,6 @@ function createMesh() {
   var straightProject = utils.lnglatsToWorld(points);
   var normalized = utils.normalizeVertices(straightProject);
   var flattenedArray = utils.flattenVectors(normalized.vertices);
-  // 创建 Float32Array 来存储顶点数据
   const verticesArray = new Float32Array(flattenedArray);
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(verticesArray, 3));

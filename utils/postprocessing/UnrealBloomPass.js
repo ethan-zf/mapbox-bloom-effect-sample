@@ -349,7 +349,7 @@ class UnrealBloomPass extends Pass {
 				
 					alphaSum /= weightSum; // Normalize alpha sum
 					alphaSum = min(alphaSum, 0.15); //Limit the value of alphaSum
-					gl_FragColor = vec4(diffuseSum / weightSum, alphaSum);
+					gl_FragColor = vec4(diffuseSum / weightSum, 1);
 				}`
 		} );
 
