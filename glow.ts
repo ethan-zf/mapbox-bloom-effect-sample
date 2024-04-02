@@ -73,7 +73,7 @@ map.on('style.load', function () {
         bloomContainer.style.height = '100%';
         bloomContainer.width = w;
         bloomContainer.height = h;
-        mapContainer.appendChild(bloomContainer);
+        // mapContainer.appendChild(bloomContainer);
       }
 
       renderer = new THREE.WebGLRenderer({
@@ -192,6 +192,33 @@ map.on('style.load', function () {
                         void main() {
                             gl_FragColor = texture2D(u_image, v_texCoord);
                         }
+
+                        #ifdef GL_ES
+                        // precision mediump float;
+                        // #endif
+
+                        // uniform sampler2D u_image;
+                        // varying vec2 v_texCoord;
+
+                        // void main() {
+                        //     vec4 base_color = texture2D(u_image, v_texCoord);
+                        //     vec4 bloom_color = texture2D(u_image, v_texCoord); // 使用 u_image 获取纹理
+
+                        //     // 计算亮度
+                        //     float lum = 0.21 * bloom_color.r + 0.71 * bloom_color.g + 0.07 * bloom_color.b;
+
+                        //     // 计算混合后的颜色
+                        //     vec3 blendedColor = base_color.rgb + bloom_color.rgb;
+
+                        //     // 计算混合后的 alpha 值
+                        //     float alpha = max(base_color.a, lum);
+
+                        //     // 进行 alpha 的调整
+                        //     alpha = mix(alpha, 0.05, 0.12);
+
+                        //     // 设置最终的颜色
+                        //     gl_FragColor = vec4(blendedColor, alpha);
+                        // }
                     `;
 
       // 顶点着色器
@@ -283,7 +310,12 @@ map.on('style.load', function () {
 
       gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
       gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE)
+
+      // gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
+      // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
       // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
       // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE);
 
@@ -295,7 +327,6 @@ map.on('style.load', function () {
       // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
       // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      
     },
   });
 
