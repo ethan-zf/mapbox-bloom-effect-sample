@@ -55,7 +55,7 @@
         vec3 blendedColor = base_color.rgb + bloom_color.rgb;
         float alpha = max(base_color.a, lum);
 
-        alpha = mix(alpha, 0.05, 0.12);
+        alpha = mix(alpha, 0.05, 0.1);
         gl_FragColor = vec4(blendedColor, alpha);
     }
 

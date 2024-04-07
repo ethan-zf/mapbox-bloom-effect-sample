@@ -193,7 +193,7 @@ map.on('style.load', function () {
                             gl_FragColor = texture2D(u_image, v_texCoord);
                         }
 
-                        #ifdef GL_ES
+                        // #ifdef GL_ES
                         // precision mediump float;
                         // #endif
 
@@ -309,7 +309,7 @@ map.on('style.load', function () {
       gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
 
       gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
-      gl.enable(gl.BLEND);
+      // gl.enable(gl.BLEND);
       // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE)
 
