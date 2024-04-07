@@ -1,6 +1,6 @@
 # mapbox-bloom-effect-sample
 
-[English](https://ethan-zf.github.io/mapbox-bloom-effect-sample/README.md) | [中文](https://ethan-zf.github.io/mapbox-bloom-effect-sample/README.zh_CN.md)
+<a href="README.md">English</a> | <a href="README.zh_CN.md">中文</a>
 
 Add bloom effect in Mapbox
 
