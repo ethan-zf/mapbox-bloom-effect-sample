@@ -313,8 +313,6 @@ map.on('style.load', function () {
 
   window.addEventListener('click', onMouseClick, false);
 
-  // 'line-gradient' can only be used with GeoJSON sources
-  // and the source must have the 'lineMetrics' option set to true
   map.addSource('line', {
     type: 'geojson',
     data: {
