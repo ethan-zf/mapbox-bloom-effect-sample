@@ -171,57 +171,29 @@ map.on('style.load', function () {
 
       //-----------------
       const vertexShaderSource = `
-                        attribute vec2 a_position;
-                        attribute vec2 a_texCoord;
-                        uniform vec2 u_resolution;
-                        varying vec2 v_texCoord;
-                        void main() {
-                            vec2 zeroToOne = a_position / u_resolution;
-                            vec2 zeroToTwo = zeroToOne * 2.0;
-                            vec2 clipSpace = zeroToTwo - 1.0;
-                            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-                            v_texCoord = a_texCoord;
-                        }
-                    `;
+          attribute vec2 a_position;
+          attribute vec2 a_texCoord;
+          uniform vec2 u_resolution;
+          varying vec2 v_texCoord;
+          void main() {
+              vec2 zeroToOne = a_position / u_resolution;
+              vec2 zeroToTwo = zeroToOne * 2.0;
+              vec2 clipSpace = zeroToTwo - 1.0;
+              gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+              v_texCoord = a_texCoord;
+          }
+      `;
       const fragmentShaderSource = `
-                        #ifdef GL_ES
-                        precision mediump float;
-                        #endif
-                        uniform sampler2D u_image;
-                        varying vec2 v_texCoord;
-                        void main() {
-                            gl_FragColor = texture2D(u_image, v_texCoord);
-                        }
+          #ifdef GL_ES
+          precision mediump float;
+          #endif
+          uniform sampler2D u_image;
+          varying vec2 v_texCoord;
+          void main() {
+              gl_FragColor = texture2D(u_image, v_texCoord);
+          }
+      `;
 
-                        // #ifdef GL_ES
-                        // precision mediump float;
-                        // #endif
-
-                        // uniform sampler2D u_image;
-                        // varying vec2 v_texCoord;
-
-                        // void main() {
-                        //     vec4 base_color = texture2D(u_image, v_texCoord);
-                        //     vec4 bloom_color = texture2D(u_image, v_texCoord); // 使用 u_image 获取纹理
-
-                        //     // 计算亮度
-                        //     float lum = 0.21 * bloom_color.r + 0.71 * bloom_color.g + 0.07 * bloom_color.b;
-
-                        //     // 计算混合后的颜色
-                        //     vec3 blendedColor = base_color.rgb + bloom_color.rgb;
-
-                        //     // 计算混合后的 alpha 值
-                        //     float alpha = max(base_color.a, lum);
-
-                        //     // 进行 alpha 的调整
-                        //     alpha = mix(alpha, 0.05, 0.12);
-
-                        //     // 设置最终的颜色
-                        //     gl_FragColor = vec4(blendedColor, alpha);
-                        // }
-                    `;
-
-      // 顶点着色器
       const vertexShader = gl.createShader(gl.VERTEX_SHADER);
       gl.shaderSource(vertexShader, vertexShaderSource);
       gl.compileShader(vertexShader);
@@ -231,7 +203,6 @@ map.on('style.load', function () {
         return;
       }
 
-      // 片元着色器
       const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
       gl.shaderSource(fragmentShader, fragmentShaderSource);
       gl.compileShader(fragmentShader);
@@ -241,7 +212,6 @@ map.on('style.load', function () {
         return;
       }
 
-      // 创建 webgl program
       program = gl.createProgram();
       gl.attachShader(program, vertexShader);
       gl.attachShader(program, fragmentShader);
@@ -266,7 +236,6 @@ map.on('style.load', function () {
       //-----------------
     },
     render: function (gl, matrix) {
-      // renderer.clear()
       scene.traverse(darkenNonBloomed);
       bloomComposer.render();
       scene.traverse(restoreMaterial);
@@ -274,14 +243,11 @@ map.on('style.load', function () {
       renderer.resetState();
       renderer.render(scene, camera);
 
-      //---------------------
       gl.useProgram(program);
 
-      // 顶点
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
       setRectangle(gl, 0, 0, container.width, container.height);
 
-      // 纹理坐标
       gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
       gl.bufferData(
         gl.ARRAY_BUFFER,
@@ -289,16 +255,12 @@ map.on('style.load', function () {
         gl.STATIC_DRAW,
       );
 
-      // 纹理
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bloomContainer);
-
-      // gl.clearColor(0, 0, 0, 0);
-      // gl.clear(gl.COLOR_BUFFER_BIT);
 
       gl.enableVertexAttribArray(positionLocation);
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -309,23 +271,9 @@ map.on('style.load', function () {
       gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
 
       gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
-      // gl.enable(gl.BLEND);
-      // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE)
-
-      // gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
-      // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-      // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-      // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE);
-
-      // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      // gl.blendEquation(gl.FUNC_ADD);
-      // gl.blendEquation(gl.FUNC_SUBTRACT)
-      // gl.blendEquation(gl.FUNC_REVERSE_SUBTRACT)
-      // gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
-      // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-      // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     },
   });

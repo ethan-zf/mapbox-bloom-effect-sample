@@ -31,7 +31,22 @@ const params = {
 };
 
 map.on('style.load', function () {
-  let camera, scene, renderer, composer, line, bloomComposer, mesh, container;
+  let camera,
+    scene,
+    renderer,
+    composer,
+    line,
+    bloomComposer,
+    mesh,
+    container,
+    program,
+    positionLocation,
+    texcoordLocation,
+    resolutionLocation,
+    positionBuffer,
+    texcoordBuffer,
+    texture,
+    bloomContainer;
   let group = new THREE.Group();
   const BLOOM_SCENE = 1;
   const bloomLayer = new THREE.Layers();
@@ -47,7 +62,7 @@ map.on('style.load', function () {
       const w = container.clientWidth;
       const h = container.clientHeight;
       const mapContainer = map.getContainer();
-      let bloomContainer = mapContainer.querySelector('#_THREE_EFFECTS_CONTAINER_');
+      bloomContainer = mapContainer.querySelector('#_THREE_EFFECTS_CONTAINER_');
       if (!bloomContainer) {
         bloomContainer = document.createElement('canvas');
         bloomContainer.id = '_THREE_EFFECTS_CONTAINER_';
@@ -58,7 +73,7 @@ map.on('style.load', function () {
         bloomContainer.style.height = '100%';
         bloomContainer.width = w;
         bloomContainer.height = h;
-        mapContainer.appendChild(bloomContainer);
+        // mapContainer.appendChild(bloomContainer);
       }
 
       renderer = new THREE.WebGLRenderer({
@@ -149,6 +164,70 @@ map.on('style.load', function () {
 
       window.addEventListener('resize', onWindowResize);
       onWindowResize();
+
+      const vertexShaderSource = `
+          attribute vec2 a_position;
+          attribute vec2 a_texCoord;
+          uniform vec2 u_resolution;
+          varying vec2 v_texCoord;
+          void main() {
+              vec2 zeroToOne = a_position / u_resolution;
+              vec2 zeroToTwo = zeroToOne * 2.0;
+              vec2 clipSpace = zeroToTwo - 1.0;
+              gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+              v_texCoord = a_texCoord;
+          }
+      `;
+      const fragmentShaderSource = `
+          #ifdef GL_ES
+          precision mediump float;
+          #endif
+          uniform sampler2D u_image;
+          varying vec2 v_texCoord;
+          void main() {
+              gl_FragColor = texture2D(u_image, v_texCoord);
+          }
+      `;
+
+      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vertexShader, vertexShaderSource);
+      gl.compileShader(vertexShader);
+      if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(vertexShader));
+        gl.deleteShader(vertexShader);
+        return;
+      }
+
+      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fragmentShader, fragmentShaderSource);
+      gl.compileShader(fragmentShader);
+      if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(fragmentShader));
+        gl.deleteShader(fragmentShader);
+        return;
+      }
+
+      program = gl.createProgram();
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        return;
+      }
+
+      // attrib
+      positionLocation = gl.getAttribLocation(program, 'a_position');
+      texcoordLocation = gl.getAttribLocation(program, 'a_texCoord');
+      resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+
+      // buffer
+      positionBuffer = gl.createBuffer();
+      texcoordBuffer = gl.createBuffer();
+
+      // texture
+      texture = gl.createTexture();
     },
     render: function (gl, matrix) {
       scene.traverse(darkenNonBloomed);
@@ -157,8 +236,49 @@ map.on('style.load', function () {
       composer.render();
       renderer.resetState();
       renderer.render(scene, camera);
+
+      gl.useProgram(program);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      setRectangle(gl, 0, 0, container.width, container.height);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]),
+        gl.STATIC_DRAW,
+      );
+
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bloomContainer);
+
+      gl.enableVertexAttribArray(positionLocation);
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+      gl.enableVertexAttribArray(texcoordLocation);
+      gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+      gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+      gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
     },
   });
+
+  function setRectangle(gl, x, y, width, height) {
+    const x1 = x;
+    const x2 = x + width;
+    const y1 = y;
+    const y2 = y + height;
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]), gl.STATIC_DRAW);
+  }
 
   function darkenNonBloomed(obj) {
     if (obj.isMesh && bloomLayer.test(obj.layers) === false) {
@@ -192,6 +312,44 @@ map.on('style.load', function () {
   }
 
   window.addEventListener('click', onMouseClick, false);
+
+  // 'line-gradient' can only be used with GeoJSON sources
+  // and the source must have the 'lineMetrics' option set to true
+  map.addSource('line', {
+    type: 'geojson',
+    data: {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            coordinates: [
+              [121.45485566448343, 31.313623092438414],
+              [121.47540519609203, 31.068403408422398],
+              [121.45293459353683, 30.940240693209183],
+            ],
+            type: 'LineString',
+          },
+        },
+      ],
+    },
+  });
+
+  // the layer must be of type 'line'
+  map.addLayer({
+    type: 'line',
+    source: 'line',
+    id: 'line',
+    paint: {
+      'line-color': 'red',
+      'line-width': 8,
+    },
+    layout: {
+      'line-cap': 'round',
+      'line-join': 'round',
+    },
+  });
 });
 
 function createLine2(obj) {
