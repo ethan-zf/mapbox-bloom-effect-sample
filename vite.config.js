@@ -20,19 +20,12 @@ export default defineConfig(({ mode }) => {
     config = {
       build: {
         lib: {
-          entry: path.resolve(__dirname, 'src/index.ts'),
-          name: 'GlowLine',
-          fileName: 'GlowLine',
+          entry: path.resolve(__dirname, 'index.js'),
+          name: 'mapboxBloomEffect',
+          fileName: 'mapbox-bloom-effect-sample',
         },
       },
     };
   }
-
-  // config.resolve = {
-  //   alias: {
-  //     '@': path.resolve(__dirname, 'src'),
-  //     '@examples': path.resolve(__dirname, './examples'),
-  //   },
-  // };
   return config;
 });
