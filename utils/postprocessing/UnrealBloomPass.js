@@ -345,7 +345,7 @@ class UnrealBloomPass extends Pass {
 						weightSum += 2.0 * w;
 					}
 				
-					gl_FragColor = vec4(diffuseSum / weightSum, 1);
+					gl_FragColor = vec4(diffuseSum / weightSum, 1.0);
 				}`
 		} );
 

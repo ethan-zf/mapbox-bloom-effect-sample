@@ -6,6 +6,7 @@ import utils from './utils/Utils.js';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -27,7 +28,7 @@ const params = {
   threshold: 0,
   strength: 0.3,
   radius: 0,
-  exposure: 0.1,
+  exposure: 1,
 };
 
 map.on('style.load', function () {
@@ -85,6 +86,7 @@ map.on('style.load', function () {
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.shadowMap.enabled = true;
       renderer.autoClear = false;
+      renderer.toneMapping = THREE.ReinhardToneMapping;
 
       // renderer.setClearColor(0xffffff);
       // Do not set the near parameter of PerspectiveCamera to 0, and also do not set far to infinity.
@@ -228,6 +230,8 @@ map.on('style.load', function () {
 
       // texture
       texture = gl.createTexture();
+
+      addGui(bloomPass);
     },
     render: function (gl, matrix) {
       scene.traverse(darkenNonBloomed);
@@ -272,6 +276,37 @@ map.on('style.load', function () {
     },
   });
 
+  function addGui(bloomPass) {
+    const gui = new GUI();
+
+    const bloomFolder = gui.addFolder('bloom');
+
+    bloomFolder.add(params, 'threshold', 0.0, 1.0).onChange(function (value) {
+      bloomPass.threshold = Number(value);
+      map.triggerRepaint();
+    });
+
+    bloomFolder.add(params, 'strength', 0.0, 3).onChange(function (value) {
+      bloomPass.strength = Number(value);
+      map.triggerRepaint();
+    });
+
+    bloomFolder
+      .add(params, 'radius', 0.0, 1.0)
+      .step(0.01)
+      .onChange(function (value) {
+        bloomPass.radius = Number(value);
+        map.triggerRepaint();
+      });
+
+    const toneMappingFolder = gui.addFolder('tone mapping');
+
+    toneMappingFolder.add(params, 'exposure', 0.1, 2).onChange(function (value) {
+      renderer.toneMappingExposure = Math.pow(value, 4.0);
+      map.triggerRepaint();
+    });
+  }
+
   function setRectangle(gl, x, y, width, height) {
     const x1 = x;
     const x2 = x + width;
@@ -313,41 +348,41 @@ map.on('style.load', function () {
 
   window.addEventListener('click', onMouseClick, false);
 
-  map.addSource('line', {
-    type: 'geojson',
-    data: {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            coordinates: [
-              [121.45485566448343, 31.313623092438414],
-              [121.47540519609203, 31.068403408422398],
-              [121.45293459353683, 30.940240693209183],
-            ],
-            type: 'LineString',
-          },
-        },
-      ],
-    },
-  });
+  // map.addSource('line', {
+  //   type: 'geojson',
+  //   data: {
+  //     type: 'FeatureCollection',
+  //     features: [
+  //       {
+  //         type: 'Feature',
+  //         properties: {},
+  //         geometry: {
+  //           coordinates: [
+  //             [121.45485566448343, 31.313623092438414],
+  //             [121.47540519609203, 31.068403408422398],
+  //             [121.45293459353683, 30.940240693209183],
+  //           ],
+  //           type: 'LineString',
+  //         },
+  //       },
+  //     ],
+  //   },
+  // });
 
-  // the layer must be of type 'line'
-  map.addLayer({
-    type: 'line',
-    source: 'line',
-    id: 'line',
-    paint: {
-      'line-color': 'red',
-      'line-width': 8,
-    },
-    layout: {
-      'line-cap': 'round',
-      'line-join': 'round',
-    },
-  });
+  // // the layer must be of type 'line'
+  // map.addLayer({
+  //   type: 'line',
+  //   source: 'line',
+  //   id: 'line',
+  //   paint: {
+  //     'line-color': 'red',
+  //     'line-width': 8,
+  //   },
+  //   layout: {
+  //     'line-cap': 'round',
+  //     'line-join': 'round',
+  //   },
+  // });
 });
 
 function createLine2(obj) {
